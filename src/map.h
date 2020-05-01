@@ -18,15 +18,15 @@ public:
 class Map
 {
 public:
-    int xSize;
-    int ySize;
+    int size;
     int cellSize;
     Editor *editor;
     vector<int> mapMatrix;
 
-    Map(int x, int y, int size, Editor *editor);
+    Map(int s, int cSize, Editor *editor);
 
+    void Resize(int newSize);
     void DrawMap2D(Color colors[]);
-    void DrawRays(Player *player, Color colors[]);
+    void DrawRays(Player *player, Color colors[], int length);
     float Distance(float aX, float aY, float bX, float bY);
 };

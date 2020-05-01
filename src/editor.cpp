@@ -8,6 +8,7 @@
 Editor::Editor(Mouse *mouse, int width, int height)
 {
     state = 0;
+    currentTile = 0;
     currentButton = 0;
     this->mouse = mouse;
     this->width = width;
@@ -22,27 +23,53 @@ void Editor::DrawBackground()
     {
         //Floor
         Color brown = {0.2f, 0.1f, 0.1f};
-        DrawBox(width / 4, 64, 512, 512, brown);
+        DrawBox(220, 80, 640, 480, brown);
 
         //Sky
         Color lightBlue = {0.7f, 0.9f, 1.f};
-        DrawBox(width / 4, 64, 512, 256, lightBlue);
+        DrawBox(220, 80, 640, 240, lightBlue);
     }
 }
 
-void Editor::DrawEditor()
+void Editor::DrawEditor(int colorSize)
 {
     //Common part
+    Color white = {1.f, 1.f, 1.f};
     Color gray = {.4f, .4f, .4f};
     Color darkGray = {.25f, .25f, .25f};
 
-    DrawBox(width / 4 - 12, 52, 536, 536, gray);
-    DrawBox(width / 4 - 2, 62, 516, 516, darkGray);
+    if (state == 0 || state == 1)
+    {
+        DrawBox(width / 4 - 12, 52, 536, 536, gray);
+        DrawBox(width / 4 - 2, 62, 516, 516, darkGray);
+    }
+    else
+    {
+        DrawBox(207, 67, 666, 506, gray);
+        DrawBox(217, 77, 646, 486, darkGray);
+    }
 
     //Map editor
     if (state == 0)
     {
-        DrawButtons(0, 67);
+        DrawText("Tile types", 78, 78);
+        //Draw tile button frames
+        int y = 94;
+        for (int i = 0; i < colorSize; i++)
+        {
+            if (currentTile == i)
+            {
+                DrawBox(70, y, 100, 36, white);
+            }
+            else
+            {
+                DrawBox(70, y, 100, 36, gray);
+            }
+            y += 48;
+        }
+
+        //And then buttons
+        DrawButtons(0, buttons.size());
     }
     //2D and 3D views
     else
@@ -71,6 +98,12 @@ void Editor::DrawText(string text, int x, int y)
 
     for (int i = 0; i < text.length(); i++)
     {
+        if (text[i] == '\'')
+        {
+            i++;
+            y += 20;
+            glRasterPos2i(x, y);
+        }
         glutBitmapCharacter(font, text[i]);
     }
 }

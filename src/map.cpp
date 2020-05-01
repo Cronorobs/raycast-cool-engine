@@ -10,17 +10,16 @@
 #define P3 3 * PI / 2
 #define DR 0.0174533
 
-Map::Map(int x, int y, int size, Editor *editor)
+Map::Map(int s, int cSize, Editor *editor)
 {
-    xSize = x;
-    ySize = y;
-    cellSize = size;
+    size = s;
+    cellSize = cSize;
     this->editor = editor;
     mapMatrix = vector<int>();
 
-    for (int i = 0; i < xSize * ySize; i++)
+    for (int i = 0; i < size * size; i++)
     {
-        if (i < 8 || i > 55 || i % 8 == 0 || i % 8 == 7)
+        if (i < size || i > size * size - (size + 1) || i % size == 0 || i % size == size - 1)
         {
             mapMatrix.push_back(1);
         }
@@ -29,18 +28,35 @@ Map::Map(int x, int y, int size, Editor *editor)
             mapMatrix.push_back(0);
         }
     }
-    mapMatrix.push_back(0);
+}
+
+void Map::Resize(int newSize)
+{
+    mapMatrix.clear();
+    size = newSize;
+
+    for (int i = 0; i < size * size; i++)
+    {
+        if (i < size || i > size * size - (size + 1) || i % size == 0 || i % size == size - 1)
+        {
+            mapMatrix.push_back(1);
+        }
+        else
+        {
+            mapMatrix.push_back(0);
+        }
+    }
 }
 
 void Map::DrawMap2D(Color colors[])
 {
     if (editor->state == 1)
     {
-        for (int i = 0; i < ySize; i++)
+        for (int i = 0; i < size; i++)
         {
-            for (int j = 0; j < xSize; j++)
+            for (int j = 0; j < size; j++)
             {
-                int index = i * ySize + j;
+                int index = i * size + j;
                 glColor3f(colors[mapMatrix[index]].r, colors[mapMatrix[index]].g, colors[mapMatrix[index]].b);
 
                 glBegin(GL_QUADS);
@@ -54,7 +70,7 @@ void Map::DrawMap2D(Color colors[])
     }
 }
 
-void Map::DrawRays(Player *player, Color colors[])
+void Map::DrawRays(Player *player, Color colors[], int length)
 {
     int mapX;
     int mapY;
@@ -68,8 +84,10 @@ void Map::DrawRays(Player *player, Color colors[])
     float xOffset;
     float yOffset;
     float finalDistance;
+    float rayNumber = 80;
+    int lineWidth = 640 / rayNumber;
 
-    rayAngle = player->angle - DR * 30;
+    rayAngle = player->angle - DR * 40;
 
     if (rayAngle < 0)
     {
@@ -80,7 +98,7 @@ void Map::DrawRays(Player *player, Color colors[])
         rayAngle -= 2 * PI;
     }
 
-    for (int i = 0; i < 60; i++)
+    for (int i = 0; i < rayNumber; i++)
     {
         //Check Horizontal Lines
         depthOfField = 0;
@@ -106,20 +124,20 @@ void Map::DrawRays(Player *player, Color colors[])
         {
             rayX = player->x;
             rayY = player->y;
-            depthOfField = 8;
+            depthOfField = size;
         }
-        while (depthOfField < 8)
+        while (depthOfField < size)
         {
             mapX = (int)(rayX) >> 6;
             mapY = (int)(rayY) >> 6;
-            mp = mapY * xSize + mapX;
+            mp = mapY * size + mapX;
             horizontalMp = mp;
-            if (mp > 0 && mp < xSize * ySize && mapMatrix[mp] > 0)
+            if (mp > 0 && mp < size * size && mapMatrix[mp] > 0)
             {
                 horizontalX = rayX;
                 horizontalY = rayY;
                 horizontalDist = Distance(player->x, player->y, horizontalX, horizontalY);
-                depthOfField = 8;
+                depthOfField = size;
             }
             else
             {
@@ -153,20 +171,20 @@ void Map::DrawRays(Player *player, Color colors[])
         {
             rayX = player->x;
             rayY = player->y;
-            depthOfField = 8;
+            depthOfField = size;
         }
-        while (depthOfField < 8)
+        while (depthOfField < size)
         {
             mapX = (int)(rayX) >> 6;
             mapY = (int)(rayY) >> 6;
-            mp = mapY * xSize + mapX;
+            mp = mapY * size + mapX;
             verticalMp = mp;
-            if (mp > 0 && mp < xSize * ySize && mapMatrix[mp] > 0)
+            if (mp > 0 && mp < size * size && mapMatrix[mp] > 0)
             {
                 verticalX = rayX;
                 verticalY = rayY;
                 verticalDist = Distance(player->x, player->y, verticalX, verticalY);
-                depthOfField = 8;
+                depthOfField = size;
             }
             else
             {
@@ -181,22 +199,14 @@ void Map::DrawRays(Player *player, Color colors[])
             rayX = verticalX;
             rayY = verticalY;
             mp = verticalMp;
-            if (mp < 0 || mp > 64)
+            if (mp < 0 || mp > size * size)
             {
                 mp = 0;
             }
             finalDistance = verticalDist;
-            if (mapMatrix[mp] == 1)
+            if (mapMatrix[mp] > 0 && mapMatrix[mp] < length)
             {
-                glColor3f(0.f, 0.5f, 0.6f);
-            }
-            if (mapMatrix[mp] == 2)
-            {
-                glColor3f(1.f, 0.f, 0.5f);
-            }
-            if (mapMatrix[mp] == 3)
-            {
-                glColor3f(.0f, .9f, 0.5f);
+                glColor3f(colors[mapMatrix[mp]].r, colors[mapMatrix[mp]].g, colors[mapMatrix[mp]].b);
             }
         }
         else
@@ -204,22 +214,14 @@ void Map::DrawRays(Player *player, Color colors[])
             rayX = horizontalX;
             rayY = horizontalY;
             mp = horizontalMp;
-            if (mp < 0 || mp > 64)
+            if (mp < 0 || mp > size * size)
             {
                 mp = 0;
             }
             finalDistance = horizontalDist;
-            if (mapMatrix[mp] == 1)
+            if (mapMatrix[mp] > 0 && mapMatrix[mp] < length)
             {
-                glColor3f(0.f, 0.4f, 0.5f);
-            }
-            if (mapMatrix[mp] == 2)
-            {
-                glColor3f(0.9f, 0.f, 0.4f);
-            }
-            if (mapMatrix[mp] == 3)
-            {
-                glColor3f(.0f, .8f, 0.4f);
+                glColor3f(colors[mapMatrix[mp]].r - .1f, colors[mapMatrix[mp]].g - .1f, colors[mapMatrix[mp]].b - .1f);
             }
         }
 
@@ -244,23 +246,23 @@ void Map::DrawRays(Player *player, Color colors[])
             coolAngle -= 2 * PI;
         }
         finalDistance *= cos(coolAngle);
-        float lineHeight = cellSize * 512 / finalDistance;
-        if (lineHeight > 512)
+        float lineHeight = cellSize * 480 / finalDistance;
+        if (lineHeight > 480)
         {
-            lineHeight = 512;
+            lineHeight = 480;
         }
-        float lineOffset = 512 / 2 - lineHeight / 2;
+        float lineOffset = 480 / 2 - lineHeight / 2;
 
         if (editor->state == 2)
         {
-            glLineWidth(8.53f);
+            glLineWidth(lineWidth);
             glBegin(GL_LINES);
-            glVertex2i(i * 8.53f + 275, lineOffset + 64);
-            glVertex2i(i * 8.53f + 275, lineHeight + lineOffset + 64);
+            glVertex2i(i * lineWidth + 224, lineOffset + 80);
+            glVertex2i(i * lineWidth + 224, lineHeight + lineOffset + 80);
             glEnd();
         }
 
-        rayAngle += DR;
+        rayAngle += DR * 80 / rayNumber;
         if (rayAngle < 0)
         {
             rayAngle += 2 * PI;
