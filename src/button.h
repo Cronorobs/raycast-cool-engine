@@ -26,11 +26,13 @@ public:
     bool IsMouseOver(int mouseX, int mouseY);
 
     Button(int x, int y, int w, int h, int id, string text, Color color, ButtonCallback callback);
+    Button(int x, int y, int w, int h, int id, string text, Color color, ButtonCallback callback, bool transp);
 
 private:
     int x;
     int y;
     int w;
     int h;
+    bool transparent;
     string text;
 };

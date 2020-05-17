@@ -8,11 +8,15 @@
 Editor::Editor(Mouse *mouse, int width, int height)
 {
     state = 0;
+    theString = "";
+    mapButtons = 64;
     currentTile = 0;
     currentButton = 0;
+    events = false;
     this->mouse = mouse;
     this->width = width;
     this->height = height;
+    displayingText = false;
     buttons = vector<Button *>();
     font = GLUT_BITMAP_HELVETICA_18;
 }
@@ -35,13 +39,16 @@ void Editor::DrawEditor(int colorSize)
 {
     //Common part
     Color white = {1.f, 1.f, 1.f};
-    Color gray = {.4f, .4f, .4f};
-    Color darkGray = {.25f, .25f, .25f};
+    Color lightGray = {.5f, .5f, .5f};
+    Color gray = {.325f, .325f, .325f};
+    Color darkGray = {.225f, .225f, .225f};
+    Color black = {0.f, 0.f, 0.f};
 
     if (state == 0 || state == 1)
     {
         DrawBox(width / 4 - 12, 52, 536, 536, gray);
-        DrawBox(width / 4 - 2, 62, 516, 516, darkGray);
+        if(state == 0 && events){ DrawBox(width / 4 - 2, 62, 516, 516, lightGray); }
+        else { DrawBox(width / 4 - 2, 62, 516, 516, darkGray); }
     }
     else
     {
@@ -68,14 +75,27 @@ void Editor::DrawEditor(int colorSize)
             y += 48;
         }
 
-        //And then buttons
-        DrawButtons(0, buttons.size());
+        //And then the buttons
+        if(events) { DrawButtons(0, buttons.size()); }
+        else { DrawButtons(0, buttons.size() - mapButtons);}
+
+        //Input field test
+        DrawText("Text", width / 4 * 3 + 20, 180);
+        DrawBox(width / 4 * 3 + 16, 192, 216, 96, white);
+        DrawText(theString, width / 4 * 3 + 20, 208, black);
     }
     //2D and 3D views
     else
     {
         DrawButtons(0, 3);
     }
+}
+
+void Editor::UpdateString(char key)
+{
+    if(key > 31) { theString += key; }
+    else if(key == 8) { theString = theString.substr(0, theString.length() - 1); }
+    else if(key == 13) { theString += "\'"; }
 }
 
 //Draw a (c) color box on a (x,y) position with (w,h) dimensions
@@ -88,6 +108,36 @@ void Editor::DrawBox(int x, int y, int w, int h, Color c)
     glVertex2i(x + w, y + h);
     glVertex2i(x, y + h);
     glEnd();
+}
+
+//Draw a (c) color box on a (x,y) position with (w,h) dimensions with (t) transparency
+void Editor::DrawBox(int x, int y, int w, int h, Color c, float t)
+{
+    glColor4f(c.r, c.g, c.b, t);
+    glBegin(GL_QUADS);
+    glVertex2i(x, y);
+    glVertex2i(x + w, y);
+    glVertex2i(x + w, y + h);
+    glVertex2i(x, y + h);
+    glEnd();
+}
+
+//Draw a (text) string on a (x,y) position with a (color)
+void Editor::DrawText(string text, int x, int y, Color color)
+{
+    glColor3f(color.r, color.g, color.b);
+    glRasterPos2i(x, y);
+
+    for (int i = 0; i < text.length(); i++)
+    {
+        if (text[i] == '\'')
+        {
+            i++;
+            y += 20;
+            glRasterPos2i(x, y);
+        }
+        glutBitmapCharacter(font, text[i]);
+    }
 }
 
 //Draw a (text) string on a (x,y) position
@@ -111,9 +161,17 @@ void Editor::DrawText(string text, int x, int y)
 //Draw the range of buttons [from - to] of the buttons vector
 void Editor::DrawButtons(int from, int to)
 {
-    for (int i = from; i < to; i++)
+    for (int i = from; i < to; i++) { buttons[i]->DrawButton(*this); }
+}
+
+void Editor::DrawUI()
+{
+    if(displayingText)
     {
-        buttons[i]->DrawButton(*this);
+        Color white = {1.f, 1.f, 1.f};
+        Color black = {0.f, 0.f, 0.f};
+        DrawBox(230, 420, 620, 130, white);
+        DrawText(theString, 250, 450, black);
     }
 }
 
@@ -122,10 +180,7 @@ void Editor::CheckButtons(int from, int to)
 {
     for (int i = from; i < to; i++)
     {
-        if (buttons[i]->highlighted)
-        {
-            buttons[i]->callback();
-        }
+        if (buttons[i]->highlighted) { buttons[i]->callback(); }
     }
 }
 
@@ -139,9 +194,6 @@ void Editor::CheckHighlighted(int from, int to)
             currentButton = buttons[i]->id;
             buttons[i]->highlighted = true;
         }
-        else
-        {
-            buttons[i]->highlighted = false;
-        }
+        else { buttons[i]->highlighted = false; }
     }
 }
