@@ -1,42 +1,31 @@
-//Author: Roberto Abad Jiménez
-//Date: 26/04/2020
-#include <GL/glut.h>
-#include <string>
+#include "imgui/imgui.h"
+#include "imgui/imgui_impl_glut.h"
+#include "imgui/imgui_impl_opengl2.h"
+#include <iostream>
 #include <vector>
-class Mouse;
-struct Color;
-class Button;
-using namespace std;
+class Map;
+class Player;
 
 class Editor
 {
-public:
-    int width;
-    int state;
-    int height;
-    int mapButtons;
-    int currentTile;
-    int currentButton;
-    Mouse *mouse;
-    string theString;
-    bool events;
-    bool displayingText;
-    vector<Button *> buttons;
+    public:
+        int state;
+        bool tiles;
+        int currentTile;
+        std::vector<ImColor> colors;
 
-    void DrawBackground();
-    void DrawEditor(int colorSize);
-    void UpdateString(char key);
-    void DrawBox(int x, int y, int w, int h, Color c);
-    void DrawBox(int x, int y, int w, int h, Color c, float t);
-    void DrawText(string text, int x, int y, Color c);
-    void DrawText(string text, int x, int y);
-    void DrawButtons(int from, int to);
-    void DrawUI();
-    void CheckButtons(int from, int to);
-    void CheckHighlighted(int from, int to);
+        Editor();
 
-    Editor(Mouse *mouse, int width, int height);
+        void Display(Map * map, Player * player);
+        void DrawEditorSettings();
+        void DrawGame();
 
-private:
-    void *font;
+    private:
+
+        void DrawMenuBar();
+        void DrawMapTools(Map * map);
+        void DrawMapEditor(Map * map);
+        void DrawMapSettings();
+        ImColor Clear(ImColor base);
+        ImColor Dark(ImColor base);
 };

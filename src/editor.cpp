@@ -1,199 +1,177 @@
-//Author: Roberto Abad Jiménez
-//Date: 26/04/2020
 #include "editor.h"
-#include "mouse.h"
-#include "button.h"
+#include "player.h"
+#include "map.h"
 
-//Constructor of the Editor class
-Editor::Editor(Mouse *mouse, int width, int height)
+Editor::Editor()
 {
     state = 0;
-    theString = "";
-    mapButtons = 64;
     currentTile = 0;
-    currentButton = 0;
-    events = false;
-    this->mouse = mouse;
-    this->width = width;
-    this->height = height;
-    displayingText = false;
-    buttons = vector<Button *>();
-    font = GLUT_BITMAP_HELVETICA_18;
+    tiles = true;
+
+    colors = std::vector<ImColor>();
+    colors.push_back(ImColor(.0f, .0f, .0f));
+    colors.push_back(ImColor(.3f, .6f, .8f));
+    colors.push_back(ImColor(1.f, .0f, .5f));
+    colors.push_back(ImColor(.1f, .9f, .6f));
+    colors.push_back(ImColor(.9f, .9f, .4f));
 }
 
-void Editor::DrawBackground()
+void Editor::Display(Map * map, Player * player)
 {
-    if (state == 2)
-    {
-        //Floor
-        Color brown = {0.2f, 0.1f, 0.1f};
-        DrawBox(220, 80, 640, 480, brown);
+    DrawMenuBar();
 
-        //Sky
-        Color lightBlue = {0.7f, 0.9f, 1.f};
-        DrawBox(220, 80, 640, 240, lightBlue);
+    switch (state)
+    {
+        case 0:
+            DrawMapTools(map);
+            DrawMapEditor(map);
+            DrawMapSettings();
+            break;
+        case 1:
+            //DrawEditorSettings();
+            break;
+        case 2:
+            DrawGame();
+            break;
     }
 }
 
-void Editor::DrawEditor(int colorSize)
+void Editor::DrawMenuBar()
 {
-    //Common part
-    Color white = {1.f, 1.f, 1.f};
-    Color lightGray = {.5f, .5f, .5f};
-    Color gray = {.325f, .325f, .325f};
-    Color darkGray = {.225f, .225f, .225f};
-    Color black = {0.f, 0.f, 0.f};
-
-    if (state == 0 || state == 1)
+    if (ImGui::BeginMainMenuBar())
     {
-        DrawBox(width / 4 - 12, 52, 536, 536, gray);
-        if(state == 0 && events){ DrawBox(width / 4 - 2, 62, 516, 516, lightGray); }
-        else { DrawBox(width / 4 - 2, 62, 516, 516, darkGray); }
+        if (ImGui::BeginMenu("Map Editor"))
+        {
+            if (ImGui::MenuItem("Tile Editor")) { state = 0; tiles = true; }
+            if (ImGui::MenuItem("Event Editor")) { state = 0; tiles = false; }
+            ImGui::EndMenu();
+        }
+        if (ImGui::BeginMenu("Settings"))
+        {
+            if (ImGui::MenuItem("Open")) { state = 1; }
+            ImGui::EndMenu();
+        }
+        if (ImGui::BeginMenu("Game View"))
+        {
+            if (ImGui::MenuItem("Open")) { state = 2; }
+            ImGui::EndMenu();
+        }
+        ImGui::EndMainMenuBar();
+    }
+}
+
+void Editor::DrawMapTools(Map * map)
+{
+    ImGui::SetNextWindowBgAlpha(.5f);
+    ImGui::SetNextWindowPos(ImVec2(24, 52), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(212, 512), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSizeConstraints(ImVec2(-1, -1),    ImVec2(-1, FLT_MAX));
+
+    ImGui::Begin("Map editor");
+    if(ImGui::Button("3D view")) { state = 2; }
+    if(tiles)
+    {
+        ImGui::Text("Tile Types:");
+        for (int i = 0; i < colors.size(); i++)
+        {
+            if(i != 0 && i % 2 != 0) { ImGui::SameLine(); }
+            ImGui::PushID(i);
+            ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4)colors[i]);
+            ImGui::PushStyleColor(ImGuiCol_ButtonHovered, (ImVec4)Clear(colors[i]));
+            ImGui::PushStyleColor(ImGuiCol_ButtonActive, (ImVec4)Dark(colors[i]));
+            char c[16] = "Floor";
+            if(i > 0) { sprintf(c, "Wall % i", i); }
+            if(ImGui::Button(c, ImVec2(80, 32))) { currentTile = i; }
+            ImGui::PopStyleColor(3);
+            ImGui::PopID();
+        }
     }
     else
     {
-        DrawBox(207, 67, 666, 506, gray);
-        DrawBox(217, 77, 646, 486, darkGray);
+        ImGui::Text("Event Types:");
+        ImGui::Button("Character", ImVec2(96, 24));//) { printf("Character"); }
+        ImGui::Button("Player Start", ImVec2(96, 24));//) { printf("Player"); }
     }
-
-    //Map editor
-    if (state == 0)
+    
+    ImGui::Text("Mode");
+    if(ImGui::Button("Tiles", ImVec2(88, 24))) { tiles = true; }
+    ImGui::SameLine();
+    if(ImGui::Button("Events", ImVec2(88, 24))) { tiles = false; }
+    if(ImGui::Button("Change Map size", ImVec2(128, 24))) 
     {
-        DrawText("Tile types", 78, 78);
-        //Draw tile button frames
-        int y = 94;
-        for (int i = 0; i < colorSize; i++)
-        {
-            if (currentTile == i)
-            {
-                DrawBox(70, y, 100, 36, white);
-            }
-            else
-            {
-                DrawBox(70, y, 100, 36, gray);
-            }
-            y += 48;
-        }
-
-        //And then the buttons
-        if(events) { DrawButtons(0, buttons.size()); }
-        else { DrawButtons(0, buttons.size() - mapButtons);}
-
-        //Input field test
-        DrawText("Text", width / 4 * 3 + 20, 180);
-        DrawBox(width / 4 * 3 + 16, 192, 216, 96, white);
-        DrawText(theString, width / 4 * 3 + 20, 208, black);
+        if (map->size == 8) { map->size = 16; }
+        else if (map->size == 16) { map->size = 32; }
+        else if (map->size == 32) { map->size = 8; }
+        map->Resize();
     }
-    //2D and 3D views
-    else
+    ImGui::End();
+}
+
+void Editor::DrawMapEditor(Map * map)
+{
+    ImGui::SetNextWindowBgAlpha(.5f);
+    ImGui::SetNextWindowPos(ImVec2(276, 52), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(526, 552), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSizeConstraints(ImVec2(-1, -1),    ImVec2(-1, FLT_MAX));
+    ImGui::Begin("Map");
+
+    int aux = 0;
+    for (int i = 0; i < map->size * map->size; i++)
     {
-        DrawButtons(0, 3);
+        ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(2, 2));
+        if (aux % map->size + 1 != 1) { ImGui::SameLine(); }
+        ImGui::PushID(i);
+        ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4)colors[map->mapMatrix[i]]);
+        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, (ImVec4)Clear(colors[map->mapMatrix[i]]));
+        ImGui::PushStyleColor(ImGuiCol_ButtonActive, (ImVec4)Dark(colors[map->mapMatrix[i]]));
+        if(ImGui::Button("", ImVec2(512/map->size - 2, 512/map->size - 2))) { map->mapMatrix[i] = currentTile; }
+        ImGui::PopID();
+        ImGui::PopStyleColor(3);
+        ImGui::PopStyleVar();
+        aux++;
     }
+
+    ImGui::End();
 }
 
-void Editor::UpdateString(char key)
+void Editor::DrawMapSettings()
 {
-    if(key > 31) { theString += key; }
-    else if(key == 8) { theString = theString.substr(0, theString.length() - 1); }
-    else if(key == 13) { theString += "\'"; }
+    //Settings menu
+    ImGui::SetNextWindowBgAlpha(.5f);
+    ImGui::SetNextWindowPos(ImVec2(844, 52), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(212, 512), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSizeConstraints(ImVec2(-1, -1),    ImVec2(-1, FLT_MAX));
+    ImGui::Begin("Settings");
+    ImGui::Text("Character Text");
+    static char str[256] = "";
+    ImGui::InputTextMultiline("", str, 256, ImVec2(184, 76));
+    ImGui::Button("Save"); //) { printf(str); }
+    ImGui::End();
 }
 
-//Draw a (c) color box on a (x,y) position with (w,h) dimensions
-void Editor::DrawBox(int x, int y, int w, int h, Color c)
+void Editor::DrawEditorSettings()
 {
-    glColor3f(c.r, c.g, c.b);
-    glBegin(GL_QUADS);
-    glVertex2i(x, y);
-    glVertex2i(x + w, y);
-    glVertex2i(x + w, y + h);
-    glVertex2i(x, y + h);
-    glEnd();
+
 }
 
-//Draw a (c) color box on a (x,y) position with (w,h) dimensions with (t) transparency
-void Editor::DrawBox(int x, int y, int w, int h, Color c, float t)
+void Editor::DrawGame()
 {
-    glColor4f(c.r, c.g, c.b, t);
-    glBegin(GL_QUADS);
-    glVertex2i(x, y);
-    glVertex2i(x + w, y);
-    glVertex2i(x + w, y + h);
-    glVertex2i(x, y + h);
-    glEnd();
+    //Draw a window for the game
+    ImGui::SetNextWindowBgAlpha(.0f);
+    ImGui::SetNextWindowPos(ImVec2(220, 80));
+    ImGui::SetNextWindowSize(ImVec2(640, 480));
+    ImGui::SetNextWindowSizeConstraints(ImVec2(-1, -1),    ImVec2(-1, FLT_MAX));
+    ImGui::Begin("Game view");
+    //ImGui::Button("Save"); //) { printf(str); }
+    ImGui::End();
 }
 
-//Draw a (text) string on a (x,y) position with a (color)
-void Editor::DrawText(string text, int x, int y, Color color)
+ImColor Editor::Clear(ImColor base)
 {
-    glColor3f(color.r, color.g, color.b);
-    glRasterPos2i(x, y);
-
-    for (int i = 0; i < text.length(); i++)
-    {
-        if (text[i] == '\'')
-        {
-            i++;
-            y += 20;
-            glRasterPos2i(x, y);
-        }
-        glutBitmapCharacter(font, text[i]);
-    }
+    return ImColor(base.Value.x + .2f, base.Value.y + .2f, base.Value.z + .2f, 1.f);
 }
 
-//Draw a (text) string on a (x,y) position
-void Editor::DrawText(string text, int x, int y)
+ImColor Editor::Dark(ImColor base)
 {
-    glColor3f(1.f, 1.f, 1.f);
-    glRasterPos2i(x, y);
-
-    for (int i = 0; i < text.length(); i++)
-    {
-        if (text[i] == '\'')
-        {
-            i++;
-            y += 20;
-            glRasterPos2i(x, y);
-        }
-        glutBitmapCharacter(font, text[i]);
-    }
-}
-
-//Draw the range of buttons [from - to] of the buttons vector
-void Editor::DrawButtons(int from, int to)
-{
-    for (int i = from; i < to; i++) { buttons[i]->DrawButton(*this); }
-}
-
-void Editor::DrawUI()
-{
-    if(displayingText)
-    {
-        Color white = {1.f, 1.f, 1.f};
-        Color black = {0.f, 0.f, 0.f};
-        DrawBox(230, 420, 620, 130, white);
-        DrawText(theString, 250, 450, black);
-    }
-}
-
-//Execute the callback of a button if it's highlighted
-void Editor::CheckButtons(int from, int to)
-{
-    for (int i = from; i < to; i++)
-    {
-        if (buttons[i]->highlighted) { buttons[i]->callback(); }
-    }
-}
-
-//Change the state of a button if the mouse is over it
-void Editor::CheckHighlighted(int from, int to)
-{
-    for (int i = from; i < to; i++)
-    {
-        if (buttons[i]->IsMouseOver(mouse->x, mouse->y))
-        {
-            currentButton = buttons[i]->id;
-            buttons[i]->highlighted = true;
-        }
-        else { buttons[i]->highlighted = false; }
-    }
+    return ImColor(base.Value.x - .2f, base.Value.y - .2f, base.Value.z - .2f, 1.f);
 }

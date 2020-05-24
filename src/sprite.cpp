@@ -54,12 +54,12 @@ void Sprite::Draw(Player * p, int lineWidth, vector<float> zBuffer)
         int x1 = (int)(540 + x0 - size / 2);
         x1 = x1 + lineWidth - (x1 % lineWidth);
 
-        int start = (int)((x1 - 224) / lineWidth);
+        int start = (int)((x1 - 221) / lineWidth);
         int lenght = (int)(size / lineWidth);
 
         for (int i = 0; i < lenght; i++)
         {
-            if(i * lineWidth + x1 > 224 - lineWidth && i * lineWidth + x1 < 864 && distance < zBuffer[i + start])
+            if(i * lineWidth + x1 > 221 - lineWidth && i * lineWidth + x1 < 864 && distance < zBuffer[i + start])
             {
                 glColor3f(1.f, .5f, 0.f);
                 glBegin(GL_LINES);

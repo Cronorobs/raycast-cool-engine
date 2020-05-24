@@ -1,23 +1,23 @@
 //Author: Roberto Abad Jiménez
 //Date: 27/04/2020
-#include "map.h"
+#include "imgui/imgui.h"
 #include "GL/glut.h"
 #include "player.h"
-#include "button.h"
 #include "sprite.h"
 #include <math.h>
+#include "map.h"
 
 #define PI 3.1415926535
-#define P2 PI / 2
-#define P3 3 * PI / 2
 #define DR 0.0174533
+#define P2 PI/2
+#define P3 3 * PI/2
 
 Map::Map(int s, int cSize)
 {
     size = s;
     cellSize = cSize;
-    mapMatrix = vector<int>();
-    eventMatrix = vector<int>();
+    mapMatrix = std::vector<int>();
+    eventMatrix = std::vector<int>();
     sprites.push_back(Sprite(*this, 10));
     sprites.push_back(Sprite(*this, 12));
     sprites.push_back(Sprite(*this, 26));
@@ -43,22 +43,12 @@ void Map::Resize()
     }
 }
 
-void Map::DrawMap(Player *player)
+void Map::DrawMap(Player * player, std::vector<ImColor> colors)
 {
     DrawBackground();
-    
-    const int colorSize = 5;
-    Color colors[colorSize] =
-    {
-        {.0f, .0f, .0f},
-        {.0f, .5f, .6f},
-        {1.f, .0f, .5f},
-        {.0f, .9f, .5f},
-        {.9f, .9f, .4f}
-    };
 
     float rayAngle;
-    float rayNumber = 80;
+    float rayNumber = 640;
     int lineWidth = 640 / rayNumber;
     vector <float> zBuffer = vector<float>();
 
@@ -69,7 +59,7 @@ void Map::DrawMap(Player *player)
 
     for (int i = 0; i < rayNumber; i++)
     {
-        Ray ray = player->CastRay(*this, rayAngle, colors, colorSize);
+        Ray ray = player->CastRay(*this, rayAngle, colors);
         zBuffer.push_back(ray.distance);
 
         //Draw 3D Walls
@@ -84,8 +74,8 @@ void Map::DrawMap(Player *player)
 
         glLineWidth(lineWidth);
         glBegin(GL_LINES);
-        glVertex2i(i * lineWidth + 224, lineOffset + 80);
-        glVertex2i(i * lineWidth + 224, lineHeight + lineOffset + 80);
+        glVertex2i(i * lineWidth + 221, lineOffset + 80);
+        glVertex2i(i * lineWidth + 221, lineHeight + lineOffset + 80);
         glEnd();
 
         rayAngle += DR * 80 / rayNumber;
@@ -100,7 +90,7 @@ void Map::DrawMap(Player *player)
 void Map::DrawBackground()
 {
     //Ground
-    glColor3f(0.2f, 0.1f, 0.1f);
+    glColor3f(.1f, .2f, .3f);
     glBegin(GL_QUADS);
     glVertex2i(220, 80);
     glVertex2i(860, 80);

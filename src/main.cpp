@@ -7,9 +7,7 @@
 #include <string.h>
 #include <math.h>
 #include "player.h"
-#include "mouse.h"
-#include "editor2.h"
-#include "button.h"
+#include "editor.h"
 #include "map.h"
 #include "sprite.h"
 
@@ -17,8 +15,7 @@
 #define DR 0.0174533
 
 //Objects
-Mouse mouse = Mouse();
-Editor2 edi = Editor2();
+Editor edi = Editor();
 Player player = Player(256, 256);
 Map map = Map(8, 64);
 
@@ -36,7 +33,7 @@ void Display()
     glViewport(0, 0, (GLsizei)io.DisplaySize.x, (GLsizei)io.DisplaySize.y);
     glClearColor(.25f, .25f, .25f, 1.f);
     glClear(GL_COLOR_BUFFER_BIT);
-    if(edi.state == 2) { map.DrawMap(&player); }
+    if(edi.state == 2) { map.DrawMap(&player, edi.colors); }
     ImGui_ImplOpenGL2_RenderDrawData(ImGui::GetDrawData());
 
     glutSwapBuffers();

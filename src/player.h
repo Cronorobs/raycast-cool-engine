@@ -1,7 +1,8 @@
 //Author: Roberto Abad Jiménez
 //Date: 02/05/2020
+#include <vector>
+struct ImColor;
 class Map;
-struct Color;
 
 struct Ray
 {
@@ -23,5 +24,5 @@ public:
     Player(int x, int y);
 
     float Distance(float aX, float aY, float bX, float bY);
-    Ray CastRay(Map map, float rayAngle, Color colors[], int length);
+    Ray CastRay(Map map, float rayAngle, std::vector<ImColor> colors);
 };

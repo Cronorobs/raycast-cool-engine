@@ -1,15 +1,15 @@
 //Author: Roberto Abad Jiménez
 //Date: 02/05/2020
+#include "imgui/imgui.h"
 #include <GL/glut.h>
-#include <math.h>
 #include "player.h"
+#include <math.h>
 #include "map.h"
-#include "button.h"
 
 #define PI 3.1415926535
-#define P2 PI / 2
-#define P3 3 * PI / 2
 #define DR 0.0174533
+#define P3 3 * PI/2
+#define P2 PI/2
 
 Player::Player(int x, int y)
 {
@@ -20,7 +20,7 @@ Player::Player(int x, int y)
     this->deltaY = sin(angle) * 5;
 }
 
-Ray Player::CastRay(Map map, float rayAngle, Color colors[], int length)
+Ray Player::CastRay(Map map, float rayAngle, std::vector<ImColor> colors)
 {
     int mapX;
     int mapY;
@@ -133,9 +133,9 @@ Ray Player::CastRay(Map map, float rayAngle, Color colors[], int length)
         ray.tile = verticalTile;
         if (ray.tile < 0 || ray.tile > map.size * map.size) { ray.tile = 0; }
         ray.distance = verticalDist;
-        if (map.mapMatrix[ray.tile] > 0 && map.mapMatrix[ray.tile] < length)
+        if (map.mapMatrix[ray.tile] > 0 && map.mapMatrix[ray.tile] < colors.size())
         {
-            glColor3f(colors[map.mapMatrix[ray.tile]].r, colors[map.mapMatrix[ray.tile]].g, colors[map.mapMatrix[ray.tile]].b);
+            glColor3f(colors[map.mapMatrix[ray.tile]].Value.x, colors[map.mapMatrix[ray.tile]].Value.y, colors[map.mapMatrix[ray.tile]].Value.z);
         }
     }
     else
@@ -145,9 +145,9 @@ Ray Player::CastRay(Map map, float rayAngle, Color colors[], int length)
         ray.tile = horizontalTile;
         if (ray.tile < 0 || ray.tile > map.size * map.size) { ray.tile = 0; }
         ray.distance = horizontalDist;
-        if (map.mapMatrix[ray.tile] > 0 && map.mapMatrix[ray.tile] < length)
+        if (map.mapMatrix[ray.tile] > 0 && map.mapMatrix[ray.tile] < colors.size())
         {
-            glColor3f(colors[map.mapMatrix[ray.tile]].r - .1f, colors[map.mapMatrix[ray.tile]].g - .1f, colors[map.mapMatrix[ray.tile]].b - .1f);
+            glColor3f(colors[map.mapMatrix[ray.tile]].Value.x - .1f, colors[map.mapMatrix[ray.tile]].Value.y - .1f, colors[map.mapMatrix[ray.tile]].Value.z - .1f);
         }
     }
 
