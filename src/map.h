@@ -12,13 +12,15 @@ class Map
     public:
         int size;
         int cellSize;
-        Editor *editor;
         vector<Sprite> sprites;
         vector<int> mapMatrix;
+        vector<int> eventMatrix;
 
-        Map(int s, int cSize, Editor *editor);
+        Map(int s, int cSize);
 
-        void Resize(int newSize);
-        void DrawMap2D(Color colors[]);
-        void DrawRays(Player *player, Color colors[], int length);
+        void Resize();
+        void DrawMap(Player *player);
+
+    private:
+        void DrawBackground();
 };
